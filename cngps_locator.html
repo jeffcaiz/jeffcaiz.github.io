@@ -1,0 +1,110 @@
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />  
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+<title>坐标定位工具</title>  
+
+<style type="text/css">
+    #container_baidu{height:600px}
+    #container_amap{height:600px}  
+</style>
+
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=T1QYG7q70rukvi1LAKTDPvfWthxsmuqr">
+</script>
+
+<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=e9aad5f7bdc7f955203997c224fa8f02"></script> 
+
+	</head>
+	<body>
+		<table>
+		<tr><td>GPS坐标：</td><td><input type="text" id="loc"></td></tr>
+		<tr><td>精度（选填）：</td><td><input type="text" id="acc"></td></tr>
+		<tr><td colspan="2" align="right"><button onclick="locate();">定位</button></td></tr>
+	</table>
+		
+		<script>
+		var convertor = new BMap.Convertor();
+		function locate()
+		{
+			var loc = document.getElementById('loc').value.split(",");
+			var accuracy = document.getElementById('acc').value;
+
+			// // 百度地图
+			map.clearOverlays();
+			var gpsBaiduPoint = new BMap.Point(loc[0],loc[1]);
+			var pointArr = [];
+			pointArr.push(gpsBaiduPoint);
+			convertor.translate(pointArr, 1, 5, function(data) {
+				if(data.status === 0) {
+					var marker = new BMap.Marker(data.points[0]);
+					map.addOverlay(marker);
+					map.centerAndZoom(data.points[0],15);
+
+					if (accuracy != '') {
+						map.addOverlay(new BMap.Circle(data.points[0], accuracy, {strokeColor:"blue", strokeWeight:2, fillColor: "blue", fillOpacity:0.3, strokeOpacity:0.01}));
+					}
+				}
+			});
+
+			// 高德
+			am_map.clearMap();
+			AMap.convertFrom(new AMap.LngLat(loc[0], loc[1]), "gps", function(status, info) {
+				if (status == "complete") {
+					var am_marker = new AMap.Marker({
+						position: info.locations[0]
+					});
+					am_marker.setMap(am_map);
+
+					am_map.setZoomAndCenter(15, info.locations[0]);
+					if (accuracy != '') {
+						new AMap.Circle({
+							center: info.locations[0],
+							radius: accuracy,
+							strokeColor: "#F33", //线颜色
+							strokeOpacity: 1, //线透明度
+							strokeWeight: 3, //线粗细度
+							strokeOpacity: 0.01, 
+							fillColor: "#ee2200", //填充颜色
+							fillOpacity: 0.35//填充透明度
+						}).setMap(am_map);
+					}
+				}
+			});
+			
+		}
+		</script>
+		<hr>
+		<h1>百度</h1>
+		<div id="container_baidu"></div> 
+<script type="text/javascript"> 
+var map = new BMap.Map("container_baidu");          // 创建地图实例  
+
+map.addControl(new BMap.NavigationControl());    
+map.addControl(new BMap.ScaleControl());    
+map.addControl(new BMap.OverviewMapControl()); 
+
+map.centerAndZoom("广州",13);
+
+</script>  
+
+		<hr>
+		<h1>高德</h1>
+		<div id="container_amap"></div>  
+		<script>
+		var am_map = new AMap.Map('container_amap',{
+			scrollWheel: false
+		});
+		am_map.setCity("广州", function() {
+			am_map.setZoom(13);
+		});
+
+		am_map.plugin(["AMap.ToolBar"],function(){
+			//加载工具条
+			var tool = new AMap.ToolBar();
+			am_map.addControl(tool);
+		});
+
+		
+		</script>
+	</body>
+</html>
